@@ -1,3 +1,8 @@
+mod card;
+mod deck;
+mod deck_traits;
+mod errors;
+
 use fltk::enums::{Color, FrameType};
 use fltk::group::Flex;
 use fltk::{
