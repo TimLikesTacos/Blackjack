@@ -1,7 +1,10 @@
 mod card;
+mod constants;
 mod deck;
 mod deck_traits;
 mod errors;
+mod hand;
+mod player;
 
 use fltk::enums::{Color, FrameType};
 use fltk::group::Flex;
@@ -17,6 +20,10 @@ use fltk::{
     text, window,
     window::Window,
 };
+use std::error::Error;
+
+// Type alias for Result<T, Box<dyn Error>>
+type Res<T> = Result<T, Box<dyn Error>>;
 
 fn main() {
     let win_w = 1000;

@@ -10,3 +10,5 @@ edition = "2018"
 rand = "0.8.4"
 # Using fltk for GUI
 fltk = "^1.2"
+# num used for rational numbers to represent money
+num = "0.4.0"

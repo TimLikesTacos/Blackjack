@@ -1,7 +1,7 @@
 //! The standard deck has 52 cards in each.  One of each demonination and suit.  
 //! However, decks can be made from multiple decks, containing identical cards.
 
-use crate::card::{Card, Denomination, Denomination::*, Suit};
+use crate::card::{Card, Denomination, Denomination::*, Suit, Visible};
 use crate::errors::BlJaError;
 use std::error::Error;
 use std::ops::{Deref, DerefMut};
@@ -63,8 +63,8 @@ impl Deck {
             let mut deck = Vec::with_capacity(cap);
             // Add cards to the deck
             for _ in 0..number_of_decks {
-                for d in DEMONS.iter() {
-                    for s in SUITS.iter() {
+                for s in SUITS.iter() {
+                    for d in DEMONS.iter() {
                         deck.push(Card::new(*d, *s));
                     }
                 }
@@ -79,8 +79,16 @@ impl Deck {
 
     /// Just a blackjack related alias for `.pop()`
     #[inline]
-    pub fn deal(&mut self) -> Option<Card> {
-        self.pop()
+    pub fn deal(&mut self, faced_up: bool) -> Option<Visible<Card>> {
+        if let Some(card) = self.pop() {
+            if faced_up {
+                Some(Visible::FacedUp(card))
+            } else {
+                Some(Visible::FacedDown(card))
+            }
+        } else {
+            None
+        }
     }
 }
 
@@ -100,6 +108,25 @@ mod decktests {
 
         let expecterr = Deck::new(usize::MAX / 50);
         assert!(expecterr.is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn dealtest() -> Result<(), Box<dyn Error>> {
+        let mut thedeck = Deck::new(1)?;
+        let mut card1 = thedeck.deal(false).unwrap();
+        assert!(card1.is_faced_down());
+        card1 = card1.flip_up();
+        assert!(card1.is_faced_up());
+        assert!(card1.denom() == Denomination::Numerical(2));
+        assert_eq!(thedeck.len(), 51);
+
+        let card2 = thedeck.deal(true).unwrap();
+
+        assert!(card2.is_faced_up());
+        assert!(card2.denom() == Denomination::Numerical(3));
+        assert_eq!(thedeck.len(), 50);
+
         Ok(())
     }
 }
