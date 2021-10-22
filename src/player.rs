@@ -1,6 +1,7 @@
 use crate::errors::BlJaError;
 use crate::hand::Hand;
 use crate::Res;
+use num::rational::Ratio;
 use num::{Rational64, Zero};
 
 #[derive(Debug)]
@@ -68,11 +69,37 @@ impl Player {
     pub fn insurance(&self) -> Rational64 {
         self.insurance
     }
+
+    #[inline]
+    pub fn collect(&mut self, amount: Rational64) {
+        self.money += amount
+    }
+
+    #[inline]
+    pub fn hand_iter<'b, 'a: 'b>(&'a self) -> impl Iterator<Item = &'a Hand> + 'b {
+        self.hands.iter()
+    }
+
+    #[inline]
+    pub fn hand_iter_mut<'b, 'a: 'b>(&'a mut self) -> impl Iterator<Item = &'a mut Hand> + 'b {
+        self.hands.iter_mut()
+    }
+
+    #[inline]
+    pub fn money(&self) -> Rational64 {
+        self.money
+    }
+
+    #[inline]
+    pub fn name(&self) -> &String {
+        &self.name
+    }
 }
 
 #[cfg(test)]
 mod playertests {
     use super::*;
+    use num::ToPrimitive;
     use std::any::Any;
 
     fn player() -> Player {
@@ -119,6 +146,9 @@ mod playertests {
             Err(e) if e.is::<BlJaError>() => assert!(true),
             _ => assert!(false),
         }
+        let res = aplayer.set_insurance(Rational64::from((9999, 100))); // $99.99
+        assert!(res.is_ok());
+        assert!((aplayer.insurance().to_f64().unwrap() - 99.99f64).abs() < 1e-10);
 
         // Errors - Not enough money
         let mut aplayer = player();
@@ -128,6 +158,16 @@ mod playertests {
             Err(e) if e.is::<BlJaError>() => assert!(true),
             _ => assert!(false),
         }
+
+        Ok(())
+    }
+
+    #[test]
+    fn collect() -> Res<()> {
+        let mut aplayer = player();
+        assert_eq!(aplayer.money(), 500.into());
+        aplayer.collect(300.into());
+        assert_eq!(aplayer.money(), 800.into());
 
         Ok(())
     }
