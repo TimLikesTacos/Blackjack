@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::thread::current;
 
-use fltk::enums::{Color, FrameType};
+use fltk::enums::{Align, Color, FrameType};
 use fltk::group::{Column, Flex, Row};
 use fltk::{
     app, button,
@@ -10,6 +10,7 @@ use fltk::{
     frame::Frame,
     group,
     group::{Pack, PackType},
+    image,
     output::Output,
     prelude::*,
     text, window,
@@ -17,8 +18,11 @@ use fltk::{
 };
 
 use gui_classes::middle::*;
-use gui_classes::player_widget::PlayerWid;
+use gui_classes::player_widget::GUIPlayer;
 
+use crate::card::Visible::{FacedDown, FacedUp};
+use crate::card::{Card, Denomination, Suit};
+use crate::gui_classes::*;
 use crate::table::Table;
 use std::borrow::BorrowMut;
 use std::cell::Cell;
@@ -44,73 +48,107 @@ pub enum Message {
 }
 
 fn main() -> Res<()> {
-    let win_w = 1000;
-    let win_h = 800;
-    let border = 20;
-
     const PLAYERS: usize = 4;
-    let player_box_h = win_h - border - 200;
-
-    let hspacing = 10;
-    let button_width = (win_w - 2 * border) / 4;
 
     let mut table = Table::new(PLAYERS as usize, 4)?;
 
     let app = app::App::default();
     let mut wind = Window::default()
         .with_label("Blackjack")
-        .with_size(win_w, win_h)
+        .with_size(WIN_W, WIN_H)
         .center_screen();
 
-    let mut vpack = group::Pack::new(border, border, win_w - 2 * border, win_w - border, "vapck1");
-    let mut hpdealer = Pack::new(border, border, win_w - border, 120, "");
-    let mut dealer = Frame::default().with_size(wind.w() - 2 * border, win_h / 4);
+    // Header section. Contains restart button, the title, and my name.
+    let mut header = GUIHeader::new(0, 0, WIN_W, EIGHTH);
 
-    dealer.set_frame(FrameType::EmbossedBox);
-    dealer.set_label("Dealer");
-    dealer.set_color(Color::Red);
+    // Dealer section.  This is where dealer cards are.
+    let mut dealer = GUIDealer::new(table.player(1).unwrap())
+        .with_size(WIN_W - 2 * BORDER, CARD_H)
+        .with_pos(BORDER, BORDER + EIGHTH);
+    let card = FacedUp(Card::new(Denomination::King, Suit::Clubs));
+    let card2 = FacedUp(Card::new(Denomination::Numerical(4), Suit::Hearts));
+    dealer.add_card(&card);
+    dealer.add_card(&card2);
 
-    hpdealer.end();
-    hpdealer.set_type(PackType::Horizontal);
+    let mut message = Frame::new(
+        BORDER,
+        BORDER + EIGHTH + CARD_H,
+        WIN_W - 2 * BORDER,
+        EIGHTH,
+        "Messages go here",
+    )
+    .with_align(Align::Center);
+    message.set_label_size(30);
+    message.set_frame(FrameType::BorderBox);
 
-    let mut middle = MiddleSection::build(0, 50, win_w - 2 * border, win_h / 4);
+    // let mut vpack = group::Pack::new(
+    //     BORDER,
+    //     BORDER + BUTTON_H,
+    //     WIN_W - 2 * BORDER,
+    //     WIN_W - BORDER,
+    //     "vapck1",
+    // );
+    //
+    // //.with_align(Align::Inside | Align::Left);
+    //
+    let mut middle = MiddleSection::new(
+        BORDER,
+        BORDER + 2 * EIGHTH + CARD_H,
+        WIN_W - 2 * BORDER,
+        EIGHTH,
+    )
+    .with_pos(BORDER, BORDER + 2 * EIGHTH + CARD_H)
+    .with_size(WIN_W - 2 * BORDER, EIGHTH);
+    middle.set_frame(FrameType::BorderBox);
+    middle.add_card(&card2);
+    middle.add_card(&card);
 
     let mut playerwid = vec![];
-    let mut hpack = group::Pack::new(0, 0, win_w - 2 * border, 300, "");
+    let mut hpack = group::Pack::new(
+        BORDER,
+        middle.y() + middle.h() + PADDING + 50,
+        WIN_W - 2 * BORDER,
+        2 * EIGHTH,
+        "",
+    );
+
     for pnum in 1..=PLAYERS {
         let mut player = table.player(pnum - 1).unwrap();
-        playerwid.push(PlayerWid::new(player, pnum));
+        let mut playgui = GUIPlayer::new(player, pnum);
+
+        playerwid.push(playgui);
     }
+
     hpack.end();
     hpack.set_type(PackType::Horizontal);
-    hpack.set_spacing(hspacing);
-    vpack.end();
-    vpack.set_type(PackType::Vertical);
-    vpack.set_spacing(15);
+    hpack.set_spacing(PADDING);
+    // vpack.end();
+    // vpack.set_type(PackType::Vertical);
+    // vpack.set_spacing(15);
 
     wind.make_resizable(true);
     wind.end();
     wind.show();
 
-    let (s, r) = app::channel::<Message>();
+    // let (s, r) = app::channel::<Message>();
+    //
+    // // Just to testing to make sure functions are working.
+    // std::thread::spawn(move || loop {
+    //     app::sleep(1.);
+    //     s.send(Message::Increment(1));
+    // });
+    //
+    // let mut current_player = 0usize;
+    // while app.wait() {
+    //     if let Some(Message::Increment(step)) = r.recv() {
+    //         playerwid[current_player].deactivate_player();
+    //         //PlayerWid::deactivate_player(&mut playerwid[current_player]);
+    //         current_player += step;
+    //         current_player %= PLAYERS;
+    //         playerwid[current_player].activate_player();
+    //     }
+    // }
 
-    // Just to testing to make sure functions are working.
-    std::thread::spawn(move || loop {
-        app::sleep(1.);
-        s.send(Message::Increment(1));
-    });
-
-    let mut current_player = 0usize;
-    while app.wait() {
-        if let Some(Message::Increment(step)) = r.recv() {
-            playerwid[current_player].deactivate_player();
-            //PlayerWid::deactivate_player(&mut playerwid[current_player]);
-            current_player += step;
-            current_player %= PLAYERS;
-            playerwid[current_player].activate_player();
-        }
-    }
-
-    // app.run()?;
+    app.run()?;
     Ok(())
 }

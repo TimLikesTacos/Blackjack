@@ -10,7 +10,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 #[derive(Debug)]
-pub struct PlayerWid {
+pub struct GUIPlayer {
     id: usize,
     player: Rc<RefCell<Player>>,
     pack: group::Pack,
@@ -20,8 +20,8 @@ pub struct PlayerWid {
     insurance: Frame,
 }
 
-impl PlayerWid {
-    pub fn new(player: Rc<RefCell<Player>>, id: usize) -> PlayerWid {
+impl GUIPlayer {
+    pub fn new(player: Rc<RefCell<Player>>, id: usize) -> GUIPlayer {
         // let player = table.player(pnum - 1).unwrap();
         let mut playervpac = group::Pack::default()
             .with_size(200, 100)
@@ -74,7 +74,7 @@ impl PlayerWid {
         row1.end();
         playervpac.auto_layout();
         playervpac.end();
-        PlayerWid {
+        GUIPlayer {
             id,
             player,
             pack: playervpac,
