@@ -15,22 +15,26 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 pub struct GUIDealer {
-    dealer: Rc<RefCell<Player>>,
     group: Group,
+    pub(crate) frame: Frame,
 }
 
 impl GUIDealer {
-    pub fn new(dealer: Rc<RefCell<Player>>) -> GUIDealer {
+    pub fn new() -> GUIDealer {
         let mut group = Group::default();
-        let mut deal = Frame::default()
+        let mut dealer = Frame::default()
             .with_size(CARD_H, CARD_H)
             .with_label("DEALER:")
             .with_align(Align::Inside | Align::Left | Align::Center);
-        group.add(&deal);
+        group.add(&dealer);
 
+        dealer.hide();
         group.end();
         group.set_frame(FrameType::BorderBox);
-        GUIDealer { dealer, group }
+        GUIDealer {
+            group,
+            frame: dealer,
+        }
     }
 
     pub fn add_card(&mut self, card: &Visible<Card>) {

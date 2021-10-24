@@ -1,4 +1,6 @@
 use crate::gui_classes::{BUTTON_H, PADDING};
+use crate::Message;
+use fltk::app::Sender;
 use fltk::button::Button;
 use fltk::enums::Align;
 use fltk::frame::Frame;
@@ -10,7 +12,7 @@ pub struct GUIHeader {
 }
 
 impl GUIHeader {
-    pub fn new(x: i32, y: i32, w: i32, h: i32) -> GUIHeader {
+    pub fn new(x: i32, y: i32, w: i32, h: i32, s: &Sender<Message>) -> GUIHeader {
         let mut row = Row::new(x, y, w, h, "");
         row.set_margin(PADDING);
 
@@ -22,6 +24,8 @@ impl GUIHeader {
             .with_size(BUTTON_H, BUTTON_H)
             .with_label("Restart")
             .with_align(Align::Inside | Align::Center);
+        button.emit(s.clone(), Message::Restart);
+
         butg.set_type(PackType::Horizontal);
         butg.end();
         // Add empty space

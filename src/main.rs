@@ -20,14 +20,20 @@ use fltk::{
 use gui_classes::middle::*;
 use gui_classes::player_widget::GUIPlayer;
 
+use crate::blackjack::Table;
 use crate::card::Visible::{FacedDown, FacedUp};
 use crate::card::{Card, Denomination, Suit};
 use crate::gui_classes::*;
-use crate::table::Table;
+use crate::hand::Action;
+use crate::player::Player;
 use std::borrow::BorrowMut;
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
+use std::convert::TryFrom;
 use std::ops::Deref;
+use std::rc::Rc;
+use std::sync::mpsc;
 
+mod blackjack;
 mod card;
 mod constants;
 mod deck;
@@ -36,21 +42,30 @@ mod errors;
 mod gui_classes;
 mod hand;
 mod player;
-mod table;
 
 // Type alias for Result<T, Box<dyn Error>>
 type Res<T> = Result<T, Box<dyn Error>>;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum Message {
-    Increment(usize),
-    Decrement(usize),
+    CurrentPlayer(usize),
+    GetBet(&'static str),
+    Bet(String),
+    GetInsurance,
+    Insurance(i32),
+    Play(Action),
+    Restart,
 }
 
 fn main() -> Res<()> {
-    const PLAYERS: usize = 4;
+    const PLAYERS: usize = 5;
+
+    //let (sender_backend, r) = mpsc::sync_channel::<Message>(3);
+    let (s, r) = app::channel::<Message>();
 
     let mut table = Table::new(PLAYERS as usize, 4)?;
+
+    let mut current_player = 0usize;
 
     let app = app::App::default();
     let mut wind = Window::default()
@@ -59,16 +74,12 @@ fn main() -> Res<()> {
         .center_screen();
 
     // Header section. Contains restart button, the title, and my name.
-    let mut header = GUIHeader::new(0, 0, WIN_W, EIGHTH);
+    let mut header = GUIHeader::new(0, 0, WIN_W, EIGHTH, &s);
 
     // Dealer section.  This is where dealer cards are.
-    let mut dealer = GUIDealer::new(table.player(1).unwrap())
+    let mut dealer = GUIDealer::new()
         .with_size(WIN_W - 2 * BORDER, CARD_H)
         .with_pos(BORDER, BORDER + EIGHTH);
-    let card = FacedUp(Card::new(Denomination::King, Suit::Clubs));
-    let card2 = FacedUp(Card::new(Denomination::Numerical(4), Suit::Hearts));
-    dealer.add_card(&card);
-    dealer.add_card(&card2);
 
     let mut message = Frame::new(
         BORDER,
@@ -81,40 +92,34 @@ fn main() -> Res<()> {
     message.set_label_size(30);
     message.set_frame(FrameType::BorderBox);
 
-    // let mut vpack = group::Pack::new(
-    //     BORDER,
-    //     BORDER + BUTTON_H,
-    //     WIN_W - 2 * BORDER,
-    //     WIN_W - BORDER,
-    //     "vapck1",
-    // );
-    //
-    // //.with_align(Align::Inside | Align::Left);
-    //
     let mut middle = MiddleSection::new(
         BORDER,
         BORDER + 2 * EIGHTH + CARD_H,
         WIN_W - 2 * BORDER,
         EIGHTH,
+        s.clone(),
     )
     .with_pos(BORDER, BORDER + 2 * EIGHTH + CARD_H)
     .with_size(WIN_W - 2 * BORDER, EIGHTH);
-    middle.set_frame(FrameType::BorderBox);
-    middle.add_card(&card2);
-    middle.add_card(&card);
 
     let mut playerwid = vec![];
     let mut hpack = group::Pack::new(
         BORDER,
         middle.y() + middle.h() + PADDING + 50,
-        WIN_W - 2 * BORDER,
-        2 * EIGHTH,
+        WIN_W - 2 * BORDER - (PLAYERS as i32 - 1) * PADDING as i32,
+        3 * EIGHTH,
         "",
     );
 
     for pnum in 1..=PLAYERS {
         let mut player = table.player(pnum - 1).unwrap();
-        let mut playgui = GUIPlayer::new(player, pnum);
+        let width = (WIN_W - 2 * BORDER - (PLAYERS as i32 - 1) * PADDING as i32) / PLAYERS as i32;
+        let mut playgui = GUIPlayer::new(pnum, width)
+            .with_size(hpack.w() / PLAYERS as i32, hpack.h())
+            .with_pos(
+                hpack.x() + (pnum as i32 - 1) * (hpack.w() / PLAYERS as i32),
+                hpack.y(),
+            );
 
         playerwid.push(playgui);
     }
@@ -122,33 +127,43 @@ fn main() -> Res<()> {
     hpack.end();
     hpack.set_type(PackType::Horizontal);
     hpack.set_spacing(PADDING);
-    // vpack.end();
-    // vpack.set_type(PackType::Vertical);
-    // vpack.set_spacing(15);
 
-    wind.make_resizable(true);
+    wind.make_resizable(false);
+
+    //message.set_label(&(playerwid[0].name() + ": Place your bet. "));
+
+    let mut gui = GUIMain::new(header, dealer, message, middle, playerwid, table);
+    // let mut gui = GUIMain {
+    //     header,
+    //     dealer,
+    //     message,
+    //     middle,
+    //     players_gui: playerwid,
+    //     table,
+    //     current_player: player_it,
+    //     index: 0,
+    // };
+
+    gui.setup_game();
+    gui.start_round();
+
     wind.end();
     wind.show();
 
-    // let (s, r) = app::channel::<Message>();
-    //
-    // // Just to testing to make sure functions are working.
-    // std::thread::spawn(move || loop {
-    //     app::sleep(1.);
-    //     s.send(Message::Increment(1));
-    // });
-    //
-    // let mut current_player = 0usize;
-    // while app.wait() {
-    //     if let Some(Message::Increment(step)) = r.recv() {
-    //         playerwid[current_player].deactivate_player();
-    //         //PlayerWid::deactivate_player(&mut playerwid[current_player]);
-    //         current_player += step;
-    //         current_player %= PLAYERS;
-    //         playerwid[current_player].activate_player();
-    //     }
-    // }
+    // std::thread::spawn(move || BlackJack::new(sender_backend, rec_backend).play());
+    // //BlackJack::new(sender_backend, rec_backend).play();
+    // //
+    // // let mut current_player = 0usize;
+    // //table.play();
+    while app.wait() {
+        if let Some(recieved) = r.recv() {
+            dbg!(&recieved);
+            match recieved {
+                Message::Bet(str) => gui.set_bet(str),
+                _ => (),
+            }
+        }
+    }
 
-    app.run()?;
     Ok(())
 }

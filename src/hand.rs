@@ -222,6 +222,11 @@ impl Hand {
         self.cards.len()
     }
 
+    #[inline]
+    pub fn card_iter<'b, 'a: 'b>(&'a self) -> impl Iterator<Item = &'a Visible<Card>> + 'b {
+        self.cards.iter()
+    }
+
     /// Local function that does the grunt work to add the card to the score and adjust the handtype.
     fn add_card_to_score(&mut self, card: Card) -> HandType {
         use HandType::*;

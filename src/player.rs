@@ -2,7 +2,13 @@ use crate::errors::BlJaError;
 use crate::hand::Hand;
 use crate::Res;
 use num::rational::Ratio;
-use num::{Rational64, Zero};
+use num::{One, Rational64, ToPrimitive, Zero};
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum Status {
+    Playing,
+    Out,
+}
 
 #[derive(Debug)]
 pub struct Player {
@@ -10,6 +16,7 @@ pub struct Player {
     hands: Vec<Hand>, // a player can have multiple hands following a split
     money: Rational64,
     insurance: Rational64,
+    status: Status,
 }
 
 impl Player {
@@ -20,6 +27,7 @@ impl Player {
             hands: vec![Hand::new()],
             money: Rational64::from_integer(500),
             insurance: Rational64::zero(),
+            status: Status::Playing,
         }
     }
 
@@ -91,8 +99,27 @@ impl Player {
     }
 
     #[inline]
+    pub fn display_money(&self) -> String {
+        // Include rounding to nearest hundreds place.
+        let float = self.money.to_f64().unwrap_or(0.0);
+        format!("{:.2}", float)
+    }
+
+    #[inline]
     pub fn name(&self) -> &String {
         &self.name
+    }
+
+    #[inline]
+    pub fn status(&self) -> Status {
+        self.status
+    }
+
+    #[inline]
+    pub fn set_if_out(&mut self) {
+        if self.money <= Rational64::one() {
+            self.status = Status::Out;
+        }
     }
 }
 

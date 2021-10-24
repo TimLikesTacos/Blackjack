@@ -33,6 +33,7 @@ const DEMONS: [Denomination; 13] = [
 #[derive(Clone, Debug, PartialEq)]
 pub struct Deck {
     pub(crate) deck: Vec<Card>,
+    pub(crate) reshuffle: bool,
 }
 
 /// Deref and DerefMut is implmented as Deck is a simple wrapper for a Vec, and we still want
@@ -53,6 +54,7 @@ impl DerefMut for Deck {
 
 impl Deck {
     /// Create a new deck using a number of nominal 52 card decks.
+    /// // todo add the plastic card
     pub fn new(number_of_decks: usize) -> Result<Deck, Box<dyn Error>> {
         // A value of 1 will be added to the deck.  This is used to add the 'plastic card' when playing
         // blackjack
@@ -70,7 +72,10 @@ impl Deck {
                 }
             }
 
-            Ok(Deck { deck })
+            Ok(Deck {
+                deck,
+                reshuffle: false,
+            })
         } else {
             // Checked multiplication overflowed.  Not a reasonable deck
             Err(Box::new(BlJaError::TooManyDecks))
@@ -79,15 +84,20 @@ impl Deck {
 
     /// Just a blackjack related alias for `.pop()`
     #[inline]
-    pub fn deal(&mut self, faced_up: bool) -> Option<Visible<Card>> {
+    pub fn deal(&mut self, faced_up: bool) -> Visible<Card> {
         if let Some(card) = self.pop() {
             if faced_up {
-                Some(Visible::FacedUp(card))
+                Visible::FacedUp(card)
             } else {
-                Some(Visible::FacedDown(card))
+                Visible::FacedDown(card)
             }
         } else {
-            None
+            if self.reshuffle {
+                panic!("Out of cards");
+            } else {
+                self.reshuffle = true;
+                self.deal(faced_up)
+            }
         }
     }
 }
