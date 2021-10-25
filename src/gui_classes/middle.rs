@@ -4,7 +4,7 @@ use crate::gui_classes::{GUICard, CARD_H, CARD_W, EIGHTH};
 use crate::hand::Action::{Double, Hit, Split, Stand};
 use crate::hand::{Action, Hand};
 use crate::player::Player;
-use crate::Message::Bet;
+use crate::Message::{Bet, Insurance};
 use crate::{Message, BORDER, PADDING, WIN_W};
 use fltk::app::Sender;
 use fltk::button::Button;
@@ -28,6 +28,7 @@ pub struct MiddleSection {
     pub(crate) double: Button,
     pub(crate) split: Button,
     pub(crate) bet: IntInput,
+    pub(crate) insurance: FloatInput,
     pub(crate) continue_button: Button,
     //player: Option<Rc<RefCell<Player>>>,
     num_cards: i32,
@@ -67,6 +68,22 @@ impl MiddleSection {
         });
 
         bet.hide();
+
+        let mut insurance = FloatInput::default()
+            .with_size(80, 60)
+            .with_pos(WIN_W / 2 - 40, group.y() + PADDING)
+            .with_label("Insurance Bet:")
+            .with_align(Align::Left);
+        insurance.set_value("0");
+        insurance.set_callback({
+            let mut sender = s.clone();
+            move |i| {
+                let value = i.value();
+                sender.send(Insurance(value));
+            }
+        });
+
+        insurance.hide();
 
         let mut hit = Button::default()
             // .with_pos(0, 0)
@@ -113,7 +130,10 @@ impl MiddleSection {
         let mut continue_button = Button::default()
             .with_align(Align::Inside | Align::Center)
             .with_size(80, 50)
-            .right_of(&double, 2 * PADDING);
+            .with_pos(
+                WIN_W / 2 - 2 * PADDING - 2 * BORDER,
+                group.y() + CARD_H + PADDING,
+            );
         continue_button.set_label("Continue");
         continue_button.emit(s, Message::Continue);
 
@@ -127,6 +147,7 @@ impl MiddleSection {
             double,
             split,
             bet,
+            insurance,
             num_cards: 0,
             //sender: s,
             continue_button,

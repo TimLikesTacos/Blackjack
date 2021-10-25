@@ -58,19 +58,19 @@ impl GUIPlayer {
             //.below_of(&title, 5)
             .with_pos(title.x(), title.y() + 55)
             .with_label("Points: ")
-            .with_align(enums::Align::Inside | enums::Align::Center);
+            .with_align(enums::Align::Inside | enums::Align::Right);
 
         Frame::default()
             .with_size(text.w(), 10)
             .with_pos(text.x(), text.y() + TEXT_H)
             .with_label("Bet: ")
-            .with_align(enums::Align::Inside | enums::Align::Center);
+            .with_align(enums::Align::Inside | enums::Align::Right);
 
         Frame::default()
             .with_size(text.w(), 10)
             .with_pos(text.x(), text.y() + 2 * TEXT_H)
             .with_label("Insurance: ")
-            .with_align(enums::Align::Inside | enums::Align::Center);
+            .with_align(enums::Align::Inside | enums::Align::Right);
 
         // col1.end();
         // let col2 = Column::default()
@@ -82,19 +82,19 @@ impl GUIPlayer {
             .with_size(text.w(), 10)
             .with_pos(text.x() + text.w(), text.y())
             .with_label("0")
-            .with_align(enums::Align::Inside | enums::Align::Center);
+            .with_align(enums::Align::Inside | enums::Align::Left);
 
         let mut bet = Frame::default()
             .with_size(points.w(), 10)
             .with_pos(points.x(), points.y() + TEXT_H)
             .with_label("0")
-            .with_align(enums::Align::Inside | enums::Align::Center);
+            .with_align(enums::Align::Inside | enums::Align::Left);
 
         let mut insurance = Frame::default()
             .with_size(points.w(), 10)
             .with_pos(points.x(), points.y() + 2 * TEXT_H)
             .with_label("0")
-            .with_align(enums::Align::Inside | enums::Align::Center);
+            .with_align(enums::Align::Inside | enums::Align::Left);
 
         // col2.end();
         // row1.end();

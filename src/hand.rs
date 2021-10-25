@@ -293,6 +293,28 @@ impl Hand {
             }
         }
     }
+
+    pub fn is_first_card_ace(&self) -> bool {
+        if self.cards.len() < 2 {
+            return false;
+        }
+        self.cards[0].is_ace()
+    }
+
+    pub fn is_first_card_10card(&self) -> bool {
+        if self.cards.len() < 2 {
+            return false;
+        }
+        self.cards[0].is_10card()
+    }
+
+    pub fn peek_for_natural(&self) -> bool {
+        if self.cards.len() != 2 {
+            return false;
+        }
+        (self.cards[0].is_ace() && self.cards[1].is_10card())
+            || (self.cards[1].is_ace() && self.cards[0].is_10card())
+    }
 }
 
 #[cfg(test)]

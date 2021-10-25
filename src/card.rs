@@ -63,6 +63,14 @@ impl Card {
             _ => false,
         }
     }
+
+    pub fn is_ace(self) -> bool {
+        use Denomination::*;
+        match self.denomination {
+            Ace => true,
+            _ => false,
+        }
+    }
 }
 
 impl Display for Denomination {

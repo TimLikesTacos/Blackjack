@@ -1,9 +1,10 @@
 use crate::card::{Card, Visible};
 use crate::errors::BlJaError;
-use crate::hand::Hand;
+use crate::hand::{Action, Hand};
 use crate::Res;
 use num::rational::Ratio;
 use num::{One, Rational64, ToPrimitive, Zero};
+use std::collections::HashSet;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Status {
@@ -55,6 +56,7 @@ impl Player {
         Ok(())
     }
 
+    /// Sets insurance
     pub fn set_insurance(&mut self, insurance_bet: Rational64) -> Res<()> {
         let newbalance = self.money - insurance_bet;
         if newbalance < Rational64::zero() {
@@ -71,9 +73,11 @@ impl Player {
         }
 
         self.insurance = insurance_bet;
+        self.money = newbalance;
         Ok(())
     }
 
+    /// Performs actions of splitting the hand, and adding cards to the hands in order.
     pub fn split_hand(
         &mut self,
         hand_num: usize,
@@ -83,8 +87,31 @@ impl Player {
         let (mut new1, mut new2) = self.hands.remove(hand_num).split_hand().unwrap();
         let new1 = new1.insert(newcard1);
         let new2 = new2.insert(newcard2);
+
+        let bet = new2.bet().unwrap();
+
         self.hands.insert(hand_num, new2);
         self.hands.insert(hand_num, new1);
+
+        self.money -= bet;
+    }
+
+    /// Helper function to check if the player has enough money to split or double.
+    fn can_split_or_double(&self, hand: &Hand) -> bool {
+        let bet = hand.bet().unwrap();
+        bet <= self.money
+    }
+
+    /// Get the actions available for the applicable hand.  This makes sure that the player has enough money
+    /// to support splitting or doubling.
+    pub fn actions(&self, hand: usize) -> HashSet<Action> {
+        let thehand = &self.hands[hand];
+        let mut actions = thehand.actions();
+        if !self.can_split_or_double(thehand) {
+            actions.remove(&Action::Double);
+            actions.remove(&Action::Split);
+        }
+        actions
     }
 
     #[inline]
@@ -167,6 +194,7 @@ impl Player {
         self.hands.insert(index, newhand);
     }
 
+    /// Clears the players hand, sets the player to Out status if does not have any playable amount of money.
     pub fn reset_after_round(&mut self, hand: usize) {
         if self.hands.len() - 1 > hand {
             return; // Do not reset, still have hands to check

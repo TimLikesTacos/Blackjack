@@ -50,18 +50,19 @@ type Res<T> = Result<T, Box<dyn Error>>;
 pub enum Message {
     CurrentPlayer(usize),
     Bet(String),
-    Insurance(i32),
+    Insurance(String),
     Play(Action),
     Restart,
     Continue,
 }
 
 fn main() -> Res<()> {
-    const PLAYERS: usize = 5;
+    const PLAYERS: usize = 1;
+    const DECKS: usize = 2;
 
     let (s, r) = app::channel::<Message>();
 
-    let mut table = Table::new(PLAYERS as usize, 4)?;
+    let mut table = Table::new(PLAYERS as usize, DECKS)?;
 
     let mut current_player = 0usize;
 
@@ -142,6 +143,20 @@ fn main() -> Res<()> {
                 Message::Bet(str) => gui.set_bet(str),
                 Message::Play(action) => gui.perform_action(action),
                 Message::Continue => gui.continue_play(),
+                Message::Insurance(insurance_bet) => gui.set_insurance(insurance_bet),
+                Message::Restart => {
+                    let table = Table::new(PLAYERS, DECKS)?;
+                    gui = GUIMain::new(
+                        gui.header,
+                        gui.dealer,
+                        gui.message,
+                        gui.middle,
+                        gui.players_gui,
+                        table,
+                    );
+                    gui.setup_game();
+                    gui.start_round();
+                }
                 _ => println!("Other"),
             }
         }

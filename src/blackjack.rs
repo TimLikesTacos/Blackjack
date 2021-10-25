@@ -1,9 +1,11 @@
-use crate::card::{Card, Visible};
+use crate::card::{Card, Denomination, Suit, Visible};
 use crate::deck::Deck;
+use crate::deck_traits::Shufflable;
 use crate::player::{Player, Status};
 use crate::{Message, Message::*, Res};
 use fltk::app::Receiver;
 use num::{Integer, Rational64, Zero};
+use rand::Rng;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::mpsc::SyncSender;
@@ -13,42 +15,38 @@ pub struct Table {
     pub(crate) dealer: Player,
     players: Vec<Rc<RefCell<Player>>>,
     deck: Deck,
-    reshuffle: bool,
+    num_of_decks: usize,
+    pub(crate) reshuffle: bool,
 }
 
 impl Table {
+    /// Creates a new table, with initialized dealer, players, and a shuffled deck.
     pub fn new(num_players: usize, num_decks: usize) -> Res<Table> {
         let mut players = vec![];
         for n in 1..=num_players {
             let name = format!("Player {}", n);
             players.push(Rc::new(RefCell::new(Player::new(name))));
         }
-        Ok(Table {
+        let mut table = Table {
             dealer: Player::new("Dealer".to_string()),
             players,
             deck: Deck::new(num_decks)?,
-            reshuffle: false,
-        })
+            num_of_decks: num_decks,
+            reshuffle: true,
+        };
+        table.shuffle();
+        Ok(table)
     }
 
     pub fn player(&self, player: usize) -> Option<&Rc<RefCell<Player>>> {
         self.players.get(player)
     }
 
-    // pub fn player_mut(&mut self, player: usize) -> Option<&mut Player> {
-    //     self.players.get_mut(player)
-    // }
-
-    // #[inline]
-    // pub fn player_iter<'b, 'a: 'b>(&'a self) -> impl Iterator<Item = &'a Rc<RefCell<Player>>> + 'b
-    // where
-    //     'a: 'b,
-    // {
-    //     self.players.iter()
-    // }
-
     /// Only used for initial card dealing at the beginning of round.
     pub fn deal_players(&mut self) {
+        //todo: This section has a lot of repetition when it comes to getting a new card.  This
+        // was due to avoiding issues with the borrow checker. Find more efficient way.
+
         for player in self.players.iter() {
             // Each player is guaranteed to have one hand at beginning of play
             let player = Rc::clone(player);
@@ -57,15 +55,29 @@ impl Table {
                 .hand_iter_mut()
                 .next()
                 .expect("Every player should have one hand");
-            hand.insert(self.deck.deal(true));
+
+            let card = self.deck.deal(true);
+            let card = match card.denom() {
+                Denomination::Extra(_) => {
+                    self.reshuffle = true;
+                    self.deck.deal(true)
+                }
+                _ => card,
+            };
+
+            hand.insert(card);
         }
 
         // Give the dealer one card faced up.
-        self.dealer
-            .hand_iter_mut()
-            .next()
-            .unwrap()
-            .insert(self.deck.deal(true));
+        let card = self.deck.deal(true);
+        let card = match card.denom() {
+            Denomination::Extra(_) => {
+                self.reshuffle = true;
+                self.deck.deal(true)
+            }
+            _ => card,
+        };
+        self.dealer.hand_iter_mut().next().unwrap().insert(card);
 
         // Give out second cards
         for player in self.players.iter() {
@@ -76,15 +88,27 @@ impl Table {
                 .hand_iter_mut()
                 .next()
                 .expect("Every player should have one hand");
-            hand.insert(self.deck.deal(true));
+            let card = self.deck.deal(true);
+            let card = match card.denom() {
+                Denomination::Extra(_) => {
+                    self.reshuffle = true;
+                    self.deck.deal(true)
+                }
+                _ => card,
+            };
+            hand.insert(card);
         }
 
         // Give dealer one card faced down
-        self.dealer
-            .hand_iter_mut()
-            .next()
-            .unwrap()
-            .insert(self.deck.deal(false));
+        let card = self.deck.deal(false);
+        let card = match card.denom() {
+            Denomination::Extra(_) => {
+                self.reshuffle = true;
+                self.deck.deal(false)
+            }
+            _ => card,
+        };
+        self.dealer.hand_iter_mut().next().unwrap().insert(card);
     }
 
     #[inline]
@@ -94,11 +118,40 @@ impl Table {
 
     #[inline]
     pub fn deal_card(&mut self, facedup: bool) -> Visible<Card> {
-        self.deck.deal(facedup)
+        let mut card = self.deck.deal(facedup);
+        match card.denom() {
+            Denomination::Extra(_) => {
+                self.reshuffle = true;
+                self.deck.deal(facedup)
+            }
+            _ => card,
+        }
     }
 
     #[inline]
     pub fn dealer_mut(&mut self) -> &mut Player {
         &mut self.dealer
+    }
+
+    pub fn shuffle(&mut self) {
+        let mut deck = Deck::new(self.num_of_decks).unwrap();
+
+        deck.shuffle();
+        // Place the cut card 60-75 cards from the back. Not done for single deck
+        if self.num_of_decks > 1 {
+            let mut rng = rand::thread_rng();
+            let position = rng.gen_range(60..=75);
+            let cut_card = Card::new(Denomination::Extra("shuffle"), Suit::Clubs);
+            let len = deck.len();
+            deck.insert(len - position, cut_card);
+            self.reshuffle = false;
+        }
+
+        self.deck = deck;
+    }
+
+    #[inline]
+    pub fn decks(&self) -> usize {
+        self.num_of_decks
     }
 }
