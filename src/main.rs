@@ -49,18 +49,16 @@ type Res<T> = Result<T, Box<dyn Error>>;
 #[derive(Debug, Clone)]
 pub enum Message {
     CurrentPlayer(usize),
-    GetBet(&'static str),
     Bet(String),
-    GetInsurance,
     Insurance(i32),
     Play(Action),
     Restart,
+    Continue,
 }
 
 fn main() -> Res<()> {
     const PLAYERS: usize = 5;
 
-    //let (sender_backend, r) = mpsc::sync_channel::<Message>(3);
     let (s, r) = app::channel::<Message>();
 
     let mut table = Table::new(PLAYERS as usize, 4)?;
@@ -130,19 +128,7 @@ fn main() -> Res<()> {
 
     wind.make_resizable(false);
 
-    //message.set_label(&(playerwid[0].name() + ": Place your bet. "));
-
     let mut gui = GUIMain::new(header, dealer, message, middle, playerwid, table);
-    // let mut gui = GUIMain {
-    //     header,
-    //     dealer,
-    //     message,
-    //     middle,
-    //     players_gui: playerwid,
-    //     table,
-    //     current_player: player_it,
-    //     index: 0,
-    // };
 
     gui.setup_game();
     gui.start_round();
@@ -150,17 +136,13 @@ fn main() -> Res<()> {
     wind.end();
     wind.show();
 
-    // std::thread::spawn(move || BlackJack::new(sender_backend, rec_backend).play());
-    // //BlackJack::new(sender_backend, rec_backend).play();
-    // //
-    // // let mut current_player = 0usize;
-    // //table.play();
     while app.wait() {
         if let Some(recieved) = r.recv() {
-            dbg!(&recieved);
             match recieved {
                 Message::Bet(str) => gui.set_bet(str),
-                _ => (),
+                Message::Play(action) => gui.perform_action(action),
+                Message::Continue => gui.continue_play(),
+                _ => println!("Other"),
             }
         }
     }

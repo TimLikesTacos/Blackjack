@@ -154,7 +154,7 @@ impl Hand {
     }
 
     ///Performs actions before adding a card
-    pub fn double(mut self) -> Res<Doubled> {
+    pub fn double(&mut self) -> Res<Doubled> {
         if !self.doubleable() {
             return Err(Box::new(BlJaError::ImproperAction(
                 "Cannot double this hand",
@@ -176,7 +176,7 @@ impl Hand {
         // Double the bet
         self.bet = Some(self.bet.ok_or_else(|| "Doubling a hand that has no bet")? * 2);
         self.htype = newtype;
-        Ok(Doubled(self))
+        Ok(Doubled(self.clone()))
     }
 
     fn splitable(&self) -> bool {

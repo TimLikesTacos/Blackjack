@@ -1,3 +1,4 @@
+use crate::card::{Card, Visible};
 use crate::errors::BlJaError;
 use crate::hand::Hand;
 use crate::Res;
@@ -73,6 +74,19 @@ impl Player {
         Ok(())
     }
 
+    pub fn split_hand(
+        &mut self,
+        hand_num: usize,
+        newcard1: Visible<Card>,
+        newcard2: Visible<Card>,
+    ) {
+        let (mut new1, mut new2) = self.hands.remove(hand_num).split_hand().unwrap();
+        let new1 = new1.insert(newcard1);
+        let new2 = new2.insert(newcard2);
+        self.hands.insert(hand_num, new2);
+        self.hands.insert(hand_num, new1);
+    }
+
     #[inline]
     pub fn insurance(&self) -> Rational64 {
         self.insurance
@@ -91,6 +105,21 @@ impl Player {
     #[inline]
     pub fn hand_iter_mut<'b, 'a: 'b>(&'a mut self) -> impl Iterator<Item = &'a mut Hand> + 'b {
         self.hands.iter_mut()
+    }
+
+    #[inline]
+    pub fn get_hand(&self, index: usize) -> Option<&Hand> {
+        self.hands.get(index)
+    }
+
+    #[inline]
+    pub fn num_hands(&self) -> usize {
+        self.hands.len()
+    }
+
+    #[inline]
+    pub fn get_hand_mut(&mut self, index: usize) -> Option<&mut Hand> {
+        self.hands.get_mut(index)
     }
 
     #[inline]
@@ -118,6 +147,33 @@ impl Player {
     #[inline]
     pub fn set_if_out(&mut self) {
         if self.money <= Rational64::one() {
+            self.status = Status::Out;
+        }
+    }
+
+    #[inline]
+    pub fn score(&self, hand: usize) -> usize {
+        self.hands[hand].score()
+    }
+
+    #[inline]
+    pub fn double(&mut self, bet: Rational64) {
+        self.money -= bet;
+    }
+
+    #[inline]
+    pub fn replace_hand(&mut self, index: usize, newhand: Hand) {
+        self.hands.remove(index);
+        self.hands.insert(index, newhand);
+    }
+
+    pub fn reset_after_round(&mut self, hand: usize) {
+        if self.hands.len() - 1 > hand {
+            return; // Do not reset, still have hands to check
+        }
+        self.hands = vec![Hand::new()];
+        self.insurance = Rational64::zero();
+        if self.money() < Rational64::one() {
             self.status = Status::Out;
         }
     }

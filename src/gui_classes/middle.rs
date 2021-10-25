@@ -1,7 +1,8 @@
 use crate::blackjack::Table;
 use crate::card::{BlackJackScore, Card, Visible};
 use crate::gui_classes::{GUICard, CARD_H, CARD_W, EIGHTH};
-use crate::hand::Action::Hit;
+use crate::hand::Action::{Double, Hit, Split, Stand};
+use crate::hand::{Action, Hand};
 use crate::player::Player;
 use crate::Message::Bet;
 use crate::{Message, BORDER, PADDING, WIN_W};
@@ -16,6 +17,7 @@ use fltk::prelude::*;
 use fltk::widget_extends;
 use std::borrow::Borrow;
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::rc::Rc;
 use std::sync::mpsc::SyncSender;
 
@@ -26,6 +28,7 @@ pub struct MiddleSection {
     pub(crate) double: Button,
     pub(crate) split: Button,
     pub(crate) bet: IntInput,
+    pub(crate) continue_button: Button,
     //player: Option<Rc<RefCell<Player>>>,
     num_cards: i32,
     //pub(crate) sender: Sender<Message>,
@@ -74,7 +77,7 @@ impl MiddleSection {
             )
             .with_align(Align::Inside | Align::Center);
         hit.set_label("Hit");
-        hit.emit(s, Message::Play(Hit));
+        hit.emit(s.clone(), Message::Play(Hit));
 
         hit.hide();
 
@@ -84,6 +87,7 @@ impl MiddleSection {
             .left_of(&hit, 2 * PADDING)
             .with_align(Align::Inside | Align::Center);
         split.set_label("Split");
+        split.emit(s.clone(), Message::Play(Split));
 
         split.hide();
 
@@ -93,6 +97,7 @@ impl MiddleSection {
             .right_of(&hit, 2 * PADDING)
             .with_align(Align::Inside | Align::Center);
         stand.set_label("Stand");
+        stand.emit(s.clone(), Message::Play(Stand));
 
         stand.hide();
 
@@ -101,8 +106,18 @@ impl MiddleSection {
             .with_size(80, 50)
             .right_of(&stand, 2 * PADDING);
         double.set_label("Double");
+        double.emit(s.clone(), Message::Play(Double));
 
         double.hide();
+
+        let mut continue_button = Button::default()
+            .with_align(Align::Inside | Align::Center)
+            .with_size(80, 50)
+            .right_of(&double, 2 * PADDING);
+        continue_button.set_label("Continue");
+        continue_button.emit(s, Message::Continue);
+
+        continue_button.hide();
 
         group.end();
         MiddleSection {
@@ -114,6 +129,7 @@ impl MiddleSection {
             bet,
             num_cards: 0,
             //sender: s,
+            continue_button,
         }
     }
 
@@ -126,10 +142,51 @@ impl MiddleSection {
         acard.set_size(CARD_W, CARD_H);
 
         self.group.add(&acard.group);
+        self.group.redraw();
+    }
+
+    pub fn add_cards(&mut self, hand: &Hand) {
+        self.remove_cards();
+        for card in hand.card_iter() {
+            self.add_card(card);
+        }
     }
 
     pub fn get_bet(&mut self) {
         self.bet.show();
+    }
+
+    pub fn hide_buttons(&mut self) {
+        self.hit.hide();
+        self.stand.hide();
+        self.split.hide();
+        self.double.hide();
+    }
+
+    pub fn show_buttons(&mut self, actions: &HashSet<Action>) {
+        self.hide_buttons();
+        for action in actions.iter() {
+            match action {
+                Action::Hit => self.hit.show(),
+                Action::Split => self.split.show(),
+                Action::Stand => self.stand.show(),
+                Action::Double => self.double.show(),
+            }
+        }
+    }
+
+    pub fn remove_cards(&mut self) {
+        let mut last = self.group.children() - 1;
+        let mut first = last - self.num_cards;
+        // the cards are the last widgets, remove all cards
+        // remove from the last to the first
+        while last > first {
+            self.group.remove_by_index(last);
+            last -= 1;
+        }
+        self.num_cards = 0;
+        self.group.hide();
+        self.group.show();
     }
 }
 

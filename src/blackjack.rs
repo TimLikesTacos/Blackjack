@@ -39,13 +39,13 @@ impl Table {
     //     self.players.get_mut(player)
     // }
 
-    #[inline]
-    pub fn player_iter<'b, 'a: 'b>(&'a self) -> impl Iterator<Item = &'a Rc<RefCell<Player>>> + 'b
-    where
-        'a: 'b,
-    {
-        self.players.iter()
-    }
+    // #[inline]
+    // pub fn player_iter<'b, 'a: 'b>(&'a self) -> impl Iterator<Item = &'a Rc<RefCell<Player>>> + 'b
+    // where
+    //     'a: 'b,
+    // {
+    //     self.players.iter()
+    // }
 
     /// Only used for initial card dealing at the beginning of round.
     pub fn deal_players(&mut self) {
@@ -88,10 +88,17 @@ impl Table {
     }
 
     #[inline]
-    pub fn active_iter<'a>(&'a self) -> impl Iterator<Item = Rc<RefCell<Player>>> + 'a {
-        self.players
-            .iter()
-            .filter(|p| p.borrow().status() == Status::Playing)
-            .map(|rc| Rc::clone(rc))
+    pub fn player_iter<'a>(&'a self) -> impl Iterator<Item = Rc<RefCell<Player>>> + 'a {
+        self.players.iter().map(|rc| Rc::clone(rc))
+    }
+
+    #[inline]
+    pub fn deal_card(&mut self, facedup: bool) -> Visible<Card> {
+        self.deck.deal(facedup)
+    }
+
+    #[inline]
+    pub fn dealer_mut(&mut self) -> &mut Player {
+        &mut self.dealer
     }
 }

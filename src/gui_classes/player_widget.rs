@@ -187,31 +187,20 @@ impl GUIPlayer {
         self.pack.add(&thisgroup);
     }
 
-    // pub fn set_points(&mut self) {
-    //     self.points.set_label(&self.player.money().to_string());
-    //     self.points.redraw()
-    // }
+    pub fn set_points(&mut self, points: &str) {
+        self.points.set_label(points);
+        self.points.redraw()
+    }
 
-    // pub fn set_bet(&mut self) {
-    //     self.bet.set_label(
-    //         &self
-    //             .player
-    //             .borrow()
-    //             .hand_iter()
-    //             .next()
-    //             .unwrap()
-    //             .bet()
-    //             .unwrap_or(Rational64::zero())
-    //             .to_string(),
-    //     );
-    //     self.bet.redraw()
-    // }
-    //
-    // pub fn set_insurance(&mut self) {
-    //     self.insurance
-    //         .set_label(&self.player.borrow().insurance().to_string());
-    //     self.insurance.redraw()
-    // }
+    pub fn set_bet(&mut self, bet: &str) {
+        self.bet.set_label(bet);
+        self.bet.redraw()
+    }
+
+    pub fn set_insurance(&mut self, insurance: &str) {
+        self.insurance.set_label(insurance);
+        self.insurance.redraw()
+    }
 }
 
 widget_extends!(GUIPlayer, Group, pack);
