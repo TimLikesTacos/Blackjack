@@ -7,7 +7,7 @@ Rules and style of play vary from location to location, but this game was based 
 [Bicycle](https://bicyclecards.com/how-to-play/blackjack/)
 website.
 
-This application can played with 1 to 6 players using 1 to 8 decks of playing cards.  If only one deck of cards
+This application can be played with 1 to 6 players using 1 to 8 decks of playing cards.  If only one deck of cards
 is used, the cards are reshuffled after every round of play.  For 2 or more decks, the "plastic cut card" is placed randomly
 near the end of the deck.  When this card is played, it signals for the cards to be reshuffled at the end of the round.
 
@@ -88,12 +88,14 @@ cargo run -- -p 5 -d 2
 These parameters are optional.  If not used, players default to 4 and decks default to 6.
 
 ## The Game
-Play if from left to right. When bids are placed, this is reflected immediately in the individual player's section 
-by the value for the bet changing, and the "points" of the playing dropping by the appropriate amount.  The value
+Play if from left to right. When bids are placed, they are reflected immediately in the individual player's section 
+by the value for the bet changing, and the "points" of the player dropping by the appropriate amount.  The value
 of 'points' reflects how many 'points' the player has available to him/her (as if they were chips in front of you at the casino table).  
 
+Bets are only in whole integers only.  However, insurance betting will allow decimals.  For example, if you bet `15`, the insurance be
+ set at the max for that hand, which is `12.5`.  
 After betting, players play their hands using available options.  These options are Hit, Stand, Split, and Double.
- These actions are only displayed if they are avaiable to be played based on card count, types of cards, or points available.  
+ These actions are only displayed if they are available to be played based on card count, types of cards, or points available.  
 Splits or Doubles **are not available** if the player does not have enough points available to cover the new bet.
 
 ![playing a hand](./screenshots/play.png)
