@@ -94,10 +94,9 @@ impl Deck {
         } else {
             if self.reshuffle {
                 panic!("Out of cards");
-            } else {
-                self.reshuffle = true;
-                self.deal(faced_up)
             }
+            self.reshuffle = true;
+            self.deal(faced_up)
         }
     }
 }
@@ -124,14 +123,14 @@ mod decktests {
     #[test]
     fn dealtest() -> Result<(), Box<dyn Error>> {
         let mut thedeck = Deck::new(1)?;
-        let mut card1 = thedeck.deal(false).unwrap();
+        let mut card1 = thedeck.deal(false);
         assert!(card1.is_faced_down());
         card1 = card1.flip_up();
         assert!(card1.is_faced_up());
         assert!(card1.denom() == Denomination::Numerical(2));
         assert_eq!(thedeck.len(), 51);
 
-        let card2 = thedeck.deal(true).unwrap();
+        let card2 = thedeck.deal(true);
 
         assert!(card2.is_faced_up());
         assert!(card2.denom() == Denomination::Numerical(3));

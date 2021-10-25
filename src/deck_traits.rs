@@ -2,7 +2,6 @@ use crate::deck::Deck;
 use crate::errors::BlJaError;
 use rand::Rng;
 use std::error::Error;
-use std::mem;
 
 /// Trait that the object can by shuffled
 pub trait Shufflable {
@@ -66,6 +65,7 @@ mod trait_tests {
                 same = false;
                 break;
             }
+            count += 1;
         }
         assert!(!same);
 
@@ -91,6 +91,7 @@ mod trait_tests {
                 same = false;
                 break;
             }
+            count += 1;
         }
         assert!(!same);
         Ok(())
@@ -104,13 +105,13 @@ mod trait_tests {
         // Cutting beyond the length of the deck should be an error
         assert!(deck.cut(53).is_err());
         // Cutting at the beginning should not do anything
-        deck.cut(0);
+        deck.cut(0)?;
         assert_eq!(deck.deck, orig.deck);
         // cutting after the last card should not do anything.
-        deck.cut(52);
+        deck.cut(52)?;
         assert_eq!(deck.deck, orig.deck);
 
-        deck.cut(2);
+        deck.cut(2)?;
         assert_eq!(deck.get(0).unwrap(), orig.get(2).unwrap());
         assert_eq!(deck.get(deck.len() - 2).unwrap(), orig.get(0).unwrap());
         assert_eq!(deck.len(), 52);

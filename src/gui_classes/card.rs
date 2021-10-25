@@ -1,16 +1,12 @@
-use crate::card::{Card, Denomination, Suit, Visible};
+use crate::card::{Card, Visible};
 use crate::gui_classes::{CARD_H, CARD_W};
-use fltk::button::ButtonType;
-use fltk::enums::FrameType::{FreeBoxType, RoundedBox, RoundedFrame, UpBox};
 use fltk::enums::{Align, Color, FrameType};
 use fltk::frame::*;
 use fltk::group::Group;
-use fltk::input::InputType;
 use fltk::prelude::*;
-use fltk::widget::Widget;
-use fltk::{image, widget_extends};
-use std::ops::{Deref, DerefMut};
+use fltk::widget_extends;
 
+#[allow(dead_code)]
 pub struct GUICard {
     pub(crate) group: Group,
     card: Visible<Card>,
@@ -49,28 +45,6 @@ impl GUICard {
 
         GUICard { group, card }
     }
-
-    // pub fn right_of<W: WidgetExt>(mut self, w: &'a GUICard, padding: i32) -> GUICard<'a> {
-    //     let newgroup = self.group.right_of(&w.group, padding);
-    //     GUICard {
-    //         group: newgroup,
-    //         card: self.card,
-    //     }
-    // }
 }
-
-// impl Deref for GUICard<'_> {
-//     type Target = Group;
-//
-//     fn deref(&self) -> &Self::Target {
-//         &self.group
-//     }
-// }
-//
-// impl DerefMut for GUICard<'_> {
-//     fn deref_mut(&mut self) -> &mut Self::Target {
-//         &mut self.group
-//     }
-// }
 
 widget_extends!(GUICard, Group, group);

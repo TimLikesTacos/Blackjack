@@ -1,25 +1,19 @@
-use crate::blackjack::Table;
-use crate::card::{BlackJackScore, Card, Visible};
-use crate::gui_classes::{GUICard, CARD_H, CARD_W, EIGHTH};
+use crate::card::{Card, Visible};
+use crate::gui_classes::{GUICard, CARD_H, CARD_W};
 use crate::hand::Action::{Double, Hit, Split, Stand};
 use crate::hand::{Action, Hand};
-use crate::player::Player;
 use crate::Message::{Bet, Insurance};
 use crate::{Message, BORDER, PADDING, WIN_W};
 use fltk::app::Sender;
 use fltk::button::Button;
+use fltk::enums::FrameType;
 use fltk::enums::*;
-use fltk::enums::{Color, FrameType};
 use fltk::frame::Frame;
-use fltk::group::{Group, Pack, PackType, Row};
-use fltk::input::{FloatInput, Input, IntInput};
+use fltk::group::Group;
+use fltk::input::{FloatInput, IntInput};
 use fltk::prelude::*;
 use fltk::widget_extends;
-use std::borrow::Borrow;
-use std::cell::RefCell;
 use std::collections::HashSet;
-use std::rc::Rc;
-use std::sync::mpsc::SyncSender;
 
 pub struct MiddleSection {
     group: Group,
@@ -30,19 +24,12 @@ pub struct MiddleSection {
     pub(crate) bet: IntInput,
     pub(crate) insurance: FloatInput,
     pub(crate) continue_button: Button,
-    //player: Option<Rc<RefCell<Player>>>,
     num_cards: i32,
-    //pub(crate) sender: Sender<Message>,
 }
 
 impl MiddleSection {
-    pub fn new(x: i32, y: i32, w: i32, h: i32, s: Sender<Message>) -> MiddleSection {
-        // let mut title = Row::new(x, y, w, 30, "").with_align(Align::Inside | Align::Center);
-        // title.end();
-
-        let mut group = Group::default();
-        // let mut toprow = Row::new(x, y, w, h / 5, "").with_align(Align::Inside | Align::Center);
-        // toprow.set_pad(15);
+    pub fn new(s: Sender<Message>) -> MiddleSection {
+        let group = Group::default();
 
         let mut hand = Frame::default()
             .with_size(10, 10)
@@ -60,7 +47,7 @@ impl MiddleSection {
             .with_align(Align::Left);
         bet.set_value("0");
         bet.set_callback({
-            let mut sender = s.clone();
+            let sender = s.clone();
             move |i| {
                 let value = i.value();
                 sender.send(Bet(value));
@@ -76,7 +63,7 @@ impl MiddleSection {
             .with_align(Align::Left);
         insurance.set_value("0");
         insurance.set_callback({
-            let mut sender = s.clone();
+            let sender = s.clone();
             move |i| {
                 let value = i.value();
                 sender.send(Insurance(value));
@@ -149,7 +136,6 @@ impl MiddleSection {
             bet,
             insurance,
             num_cards: 0,
-            //sender: s,
             continue_button,
         }
     }
@@ -173,10 +159,6 @@ impl MiddleSection {
         }
     }
 
-    pub fn get_bet(&mut self) {
-        self.bet.show();
-    }
-
     pub fn hide_buttons(&mut self) {
         self.hit.hide();
         self.stand.hide();
@@ -198,7 +180,7 @@ impl MiddleSection {
 
     pub fn remove_cards(&mut self) {
         let mut last = self.group.children() - 1;
-        let mut first = last - self.num_cards;
+        let first = last - self.num_cards;
         // the cards are the last widgets, remove all cards
         // remove from the last to the first
         while last > first {

@@ -2,7 +2,6 @@ use crate::card::{Card, Visible};
 use crate::errors::BlJaError;
 use crate::hand::{Action, Hand};
 use crate::Res;
-use num::rational::Ratio;
 use num::{One, Rational64, ToPrimitive, Zero};
 use std::collections::HashSet;
 
@@ -84,7 +83,7 @@ impl Player {
         newcard1: Visible<Card>,
         newcard2: Visible<Card>,
     ) {
-        let (mut new1, mut new2) = self.hands.remove(hand_num).split_hand().unwrap();
+        let (new1, new2) = self.hands.remove(hand_num).split_hand().unwrap();
         let new1 = new1.insert(newcard1);
         let new2 = new2.insert(newcard2);
 
@@ -169,13 +168,6 @@ impl Player {
     #[inline]
     pub fn status(&self) -> Status {
         self.status
-    }
-
-    #[inline]
-    pub fn set_if_out(&mut self) {
-        if self.money <= Rational64::one() {
-            self.status = Status::Out;
-        }
     }
 
     #[inline]

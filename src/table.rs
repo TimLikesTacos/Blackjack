@@ -1,15 +1,13 @@
 use crate::card::{Card, Denomination, Suit, Visible};
 use crate::deck::Deck;
 use crate::deck_traits::Shufflable;
-use crate::player::{Player, Status};
-use crate::{Message, Message::*, Res};
-use fltk::app::Receiver;
-use num::{Integer, Rational64, Zero};
+use crate::player::Player;
+use crate::Res;
 use rand::Rng;
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::mpsc::SyncSender;
 
+/// A struct where the players, dealer, and deck is located.
 #[derive(Debug)]
 pub struct Table {
     pub(crate) dealer: Player,
@@ -118,7 +116,7 @@ impl Table {
 
     #[inline]
     pub fn deal_card(&mut self, facedup: bool) -> Visible<Card> {
-        let mut card = self.deck.deal(facedup);
+        let card = self.deck.deal(facedup);
         match card.denom() {
             Denomination::Extra(_) => {
                 self.reshuffle = true;

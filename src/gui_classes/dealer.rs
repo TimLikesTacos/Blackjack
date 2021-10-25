@@ -1,19 +1,12 @@
-use crate::card::Visible::{FacedDown, FacedUp};
-use crate::card::{Card, Denomination, Suit, Visible};
+use crate::card::{Card, Visible};
 use crate::gui_classes::{GUICard, CARD_H, CARD_W};
 use crate::hand::Hand;
-use crate::player::Player;
 use crate::PADDING;
 use fltk::enums::{Align, FrameType};
 use fltk::frame::Frame;
-use fltk::group::Column;
 use fltk::group::Group;
-use fltk::group::Row;
 use fltk::prelude::*;
-use fltk::widget::Widget;
 use fltk::widget_extends;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 pub struct GUIDealer {
     group: Group,
@@ -61,7 +54,7 @@ impl GUIDealer {
 
     pub fn remove_cards(&mut self) {
         let mut last = self.group.children() - 1;
-        let mut first = last - self.num_cards;
+        let first = last - self.num_cards;
         // the cards are the last widgets, remove all cards
         // remove from the last to the first
         while last > first {

@@ -12,3 +12,4 @@ rand = "0.8.4"
 fltk = "^1.2"
 # num used for rational numbers to represent money
 num = "0.4.0"
+clap = "2.33.3"

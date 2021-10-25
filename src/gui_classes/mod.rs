@@ -1,11 +1,27 @@
-use fltk::button::Button;
-
 mod card;
 mod dealer;
 mod header;
 pub mod middle;
 pub mod player_widget;
 pub use fltk::prelude::*;
+
+pub use crate::gui_classes::card::*;
+pub use crate::gui_classes::dealer::GUIDealer;
+pub use crate::gui_classes::header::GUIHeader;
+use crate::gui_classes::middle::MiddleSection;
+use crate::gui_classes::player_widget::GUIPlayer;
+use crate::hand::{Action, HandType};
+use crate::player::{Player, Status};
+use crate::table::Table;
+use fltk::enums;
+use fltk::enums::{Align, FrameType};
+use fltk::frame::Frame;
+use fltk::group::{Column, Row};
+use num::{Rational64, ToPrimitive, Zero};
+use std::cell::RefCell;
+use std::cmp::min;
+use std::ops::Deref;
+use std::rc::Rc;
 
 pub const BUTTON_H: i32 = 80;
 pub const WIN_W: i32 = 1000;
@@ -18,27 +34,9 @@ pub const CARD_W: i32 = (CARD_H as f32 * CARD_RATIO) as i32;
 const CARD_RATIO: f32 = 2.5 / 3.5;
 pub const EIGHTH: i32 = WIN_H / 8;
 
-use crate::blackjack::Table;
-use crate::constants::TWENTYONE;
-pub use crate::gui_classes::card::*;
-pub use crate::gui_classes::dealer::GUIDealer;
-pub use crate::gui_classes::header::GUIHeader;
-use crate::gui_classes::middle::MiddleSection;
-use crate::gui_classes::player_widget::GUIPlayer;
-use crate::hand::{Action, Hand, HandType};
-use crate::player::{Player, Status};
-use crate::Message;
-use fltk::enums;
-use fltk::enums::{Align, FrameType};
-use fltk::frame::Frame;
-use fltk::group::{Column, Row};
-use num::{Rational64, ToPrimitive, Zero};
-use std::cell::RefCell;
-use std::cmp::min;
-use std::collections::HashSet;
-use std::ops::{Deref, DerefMut};
-use std::rc::Rc;
-
+/// This is the main struct for GUI manipulation and overall flow of the game.  The sequence of playing,
+/// from dealing, to betting, to insurance, to hitting or standing, and finally payout is done here.  Most of the
+/// logic for rules occurs in the non-gui structs.
 pub struct GUIMain {
     pub(crate) header: GUIHeader,
     pub(crate) dealer: GUIDealer,
@@ -94,6 +92,8 @@ impl GUIMain {
         }
     }
 
+    /// Starts a full round of players.  Active players will but updated so that only players with money at this
+    /// point in time can play.
     pub fn start_round(&mut self) {
         if let Some(_) = self.set_active_players_get_first() {
             if self.table.reshuffle {
@@ -193,6 +193,7 @@ impl GUIMain {
         }
     }
 
+    /// Used to peek under the dealers card to see if it has a blackjack
     fn peek_for_natural(&mut self) {
         let dealer_hand = self.table.dealer.get_hand(0).unwrap().clone();
         if dealer_hand.peek_for_natural() {
@@ -205,6 +206,7 @@ impl GUIMain {
         }
     }
 
+    /// Sets up conditions for insurance
     fn offer_insurance(&mut self) {
         self.set_current();
         let player = self.active_players[self.index].borrow();
@@ -213,6 +215,7 @@ impl GUIMain {
         self.middle.insurance.show();
     }
 
+    /// Sets insurance for the player
     pub fn set_insurance(&mut self, bet_str: String) {
         if let Ok(bet) = bet_str.parse::<f64>() {
             let rc = Rc::clone(&self.active_players[self.index]);
@@ -314,17 +317,6 @@ impl GUIMain {
         (self.cont_func)(self)
     }
 
-    fn current_hand(&mut self) -> Option<Hand> {
-        if let Some(hand) = self.active_players[self.index]
-            .borrow()
-            .get_hand(self.hand_num)
-        {
-            Some(hand.clone())
-        } else {
-            None
-        }
-    }
-
     pub fn perform_action(&mut self, action: Action) {
         match action {
             Action::Hit => self.hit(),
@@ -336,7 +328,7 @@ impl GUIMain {
 
     fn hit(&mut self) {
         {
-            let mut player = Rc::clone(&self.active_players[self.index]);
+            let player = Rc::clone(&self.active_players[self.index]);
             let mut hand = player.borrow_mut();
             let hand = hand.get_hand_mut(self.hand_num).unwrap();
             // deal a card
@@ -374,7 +366,7 @@ impl GUIMain {
     }
 
     fn stand(&mut self) {
-        let mut player = Rc::clone(&self.active_players[self.index]);
+        let player = Rc::clone(&self.active_players[self.index]);
         self.message
             .set_label(&format!("{} stands.", player.borrow().name()));
         self.middle.continue_button.show();
@@ -384,7 +376,7 @@ impl GUIMain {
     }
 
     fn split(&mut self) {
-        let mut player = Rc::clone(&self.active_players[self.index]);
+        let player = Rc::clone(&self.active_players[self.index]);
         self.message
             .set_label(&format!("{} splits", player.borrow().name()));
         self.middle.hide_buttons();
@@ -403,7 +395,7 @@ impl GUIMain {
 
     fn double(&mut self) {
         {
-            let mut player = Rc::clone(&self.active_players[self.index]);
+            let player = Rc::clone(&self.active_players[self.index]);
             let bet = player
                 .borrow()
                 .get_hand(self.hand_num)
@@ -414,7 +406,7 @@ impl GUIMain {
             let mut player = player.borrow_mut();
             let avail_money = player.money();
 
-            let mut hand = player.get_hand_mut(self.hand_num).unwrap();
+            let hand = player.get_hand_mut(self.hand_num).unwrap();
 
             let double_bet = min(avail_money, bet);
             if double_bet < bet {
@@ -485,7 +477,7 @@ impl GUIMain {
         {
             self.middle.continue_button.show();
 
-            let mut dealer_hand = self.table.dealer.get_hand(0).unwrap();
+            let dealer_hand = self.table.dealer.get_hand(0).unwrap();
             // dealer_hand.flip_over();
             //
             // self.dealer.flip_over(dealer_hand);
@@ -526,8 +518,12 @@ impl GUIMain {
 
             _ => {
                 let string = match ins_payout > Rational64::zero() {
-                    true => format!("Dealer has a blackjack. Insurance pays {:.2}", ins_payout),
-                    false => format!("Dealer has a blackjack"),
+                    true => format!(
+                        "Dealer has a blackjack. Insurance pays {} {:.2}",
+                        player.name(),
+                        ins_payout
+                    ),
+                    false => format!("Dealer has a blackjack, {} lost", player.name()),
                 };
                 self.message.set_label(&string);
                 player.collect(ins_payout);
@@ -542,21 +538,29 @@ impl GUIMain {
         let mut player = playerrc.borrow_mut();
         self.middle.add_cards(&hand);
 
+        let handnum = if self.hand_num > 0 {
+            format!(", Hand: {}", self.hand_num + 1)
+        } else {
+            "".to_string()
+        };
         match hand.hand_type() {
             HandType::Bust => {
                 // Player still loses due to busting first
-                self.message.set_label(&format!("{} Busts", player.name()));
+                self.message
+                    .set_label(&format!("{}{} Busts", player.name(), handnum));
             }
 
             HandType::Natural => {
-                self.message.set_label(&format!("Blackjack!"));
+                self.message
+                    .set_label(&format!("{}{} Blackjack!", player.name(), handnum));
                 player.collect(hand.bet().unwrap() * Rational64::from((5, 2)));
             }
 
             _ => {
                 self.message.set_label(&format!(
-                    "{} won! Player score: {}, Dealer Bust",
+                    "{}{} won! Player score: {}, Dealer Bust",
                     player.name(),
+                    handnum,
                     hand.score(),
                 ));
                 player.collect(hand.bet().unwrap() * 2);
@@ -574,14 +578,22 @@ impl GUIMain {
         let dealer_score = self.table.dealer.score(0);
         let player_score = player.score(self.hand_num);
 
+        let handnum = if self.hand_num > 0 {
+            format!(", Hand: {}", self.hand_num + 1)
+        } else {
+            "".to_string()
+        };
+
         match hand.hand_type() {
             HandType::Bust => {
                 // Player still loses due to busting first
-                self.message.set_label(&format!("{} Busts", player.name()));
+                self.message
+                    .set_label(&format!("{}{} Busts", player.name(), handnum));
             }
 
             HandType::Natural => {
-                self.message.set_label(&format!("Blackjack!"));
+                self.message
+                    .set_label(&format!("{}{} Blackjack!", player.name(), handnum));
                 player.collect(hand.bet().unwrap() * Rational64::from((5, 2)));
             }
 
@@ -589,8 +601,9 @@ impl GUIMain {
                 // If player won
                 if player_score > dealer_score {
                     self.message.set_label(&format!(
-                        "{} won! Player score: {}, Dealer score {}",
+                        "{}{} won! Player score: {}, Dealer score {}",
                         player.name(),
+                        handnum,
                         player_score,
                         dealer_score
                     ));
@@ -599,16 +612,20 @@ impl GUIMain {
                 // If player tied with dealer
                 else if player_score == dealer_score {
                     self.message.set_label(&format!(
-                        "Tie! Player score: {}, Dealer score {}",
-                        player_score, dealer_score
+                        "{}{} Tie! Player score: {}, Dealer score {}",
+                        player.name(),
+                        handnum,
+                        player_score,
+                        dealer_score
                     ));
                     player.collect(hand.bet().unwrap());
                 }
                 // If player lost
                 else {
                     self.message.set_label(&format!(
-                        "Sorry, {} lost. Player score: {}, Dealer score {}",
+                        "Sorry, {}{} lost. Player score: {}, Dealer score {}",
                         player.name(),
+                        handnum,
                         player_score,
                         dealer_score
                     ));
@@ -616,6 +633,8 @@ impl GUIMain {
             }
         }
     }
+
+    /// Clean GUI after player settles upo.
     fn clean_after_settle(&mut self) {
         self.players_gui[self.index].set_bet("0");
         self.players_gui[self.index].set_insurance("0");
@@ -644,10 +663,10 @@ impl GUIMain {
     }
 
     pub fn set_current(&mut self) {
-        for mut player in self.players_gui.iter_mut() {
+        for player in self.players_gui.iter_mut() {
             player.deactivate_player();
         }
-        let mut player = &mut self.players_gui[self.index];
+        let player = &mut self.players_gui[self.index];
         player.activate_player();
     }
 
@@ -699,10 +718,6 @@ impl GUIMain {
         }
     }
 
-    fn player_available(&self, player: usize) -> bool {
-        self.table.player(player).unwrap().borrow().money() > Rational64::zero()
-    }
-
     fn is_bust(&self) -> bool {
         let player = Rc::clone(&self.active_players[self.index]);
         let handtype = player.borrow().get_hand(self.hand_num).unwrap().hand_type();
@@ -725,9 +740,11 @@ impl GUIMain {
             .set_label("Game over!  All players are out of money.");
     }
 
+    // todo allow the player section to show completed hands
+    #[allow(dead_code)]
     fn player_hand_below(&mut self) {
         let thegui = &self.players_gui[self.index];
-        for (num, hand) in self
+        for (_, hand) in self
             .table
             .player(self.index)
             .unwrap()
@@ -735,7 +752,7 @@ impl GUIMain {
             .hand_iter()
             .enumerate()
         {
-            let mut row = Row::default()
+            let row = Row::default()
                 .with_label("")
                 .with_size(thegui.w(), 20)
                 .with_pos(thegui.x(), thegui.insurance.y() + 2 * PADDING)
@@ -743,7 +760,7 @@ impl GUIMain {
 
             // row.set_frame(FrameType::RoundedBox);
 
-            let mut col1 = Column::default()
+            let col1 = Column::default()
                 .with_label("Hand: ")
                 .with_size(50, 30)
                 .with_align(Align::Center | Align::Inside);

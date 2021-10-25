@@ -83,6 +83,7 @@ impl Hand {
     }
 
     /// Action to add any flipped over card to the score and adjust the handtype
+    #[allow(mutable_borrow_reservation_conflict)]
     pub fn flip_over(&mut self) -> HandType {
         // Only the last card in the hand should be faced down.
         if self.cards.len() == 0 {
@@ -301,13 +302,6 @@ impl Hand {
         self.cards[0].is_ace()
     }
 
-    pub fn is_first_card_10card(&self) -> bool {
-        if self.cards.len() < 2 {
-            return false;
-        }
-        self.cards[0].is_10card()
-    }
-
     pub fn peek_for_natural(&self) -> bool {
         if self.cards.len() != 2 {
             return false;
@@ -332,12 +326,12 @@ mod handtests {
     fn handtest() -> Res<()> {
         let mut hand = Hand::new();
         let mut deck = Deck::new(1)?;
-        hand.insert(deck.deal(true).unwrap());
+        hand.insert(deck.deal(true));
         assert_eq!(hand.score, 2);
         assert_eq!(hand.htype, HandType::Normal);
 
         // add card face down
-        hand.insert(deck.deal(false).unwrap());
+        hand.insert(deck.deal(false));
         assert_eq!(hand.score, 2);
         assert_eq!(hand.htype, HandType::Normal);
 
@@ -362,11 +356,8 @@ mod handtests {
     #[test]
     fn handtest2() -> Res<()> {
         let mut hand = Hand::new();
-        let mut deck = Deck::new(1)?;
 
         let king = Card::new(Denomination::King, Suit::Hearts);
-        let queen = Card::new(Denomination::Queen, Suit::Spades);
-
         let ace1 = Card::new(Denomination::Ace, Suit::Hearts);
         let ace2 = Card::new(Denomination::Ace, Suit::Diamonds);
 
@@ -403,16 +394,8 @@ mod handtests {
 
         let mut hand = Hand::new();
 
-        let king = Card::new(Denomination::King, Suit::Hearts);
-        let queen = Card::new(Denomination::Queen, Suit::Spades);
-        let jack = Card::new(Denomination::Jack, Suit::Spades);
-        let ace1 = Card::new(Denomination::Ace, Suit::Hearts);
-        let ace2 = Card::new(Denomination::Ace, Suit::Diamonds);
-
         let nine = Card::new(Denomination::Numerical(9), Suit::Diamonds);
-        let four = Card::new(Denomination::Numerical(4), Suit::Spades);
         let three = Card::new(Denomination::Numerical(3), Suit::Hearts);
-        let two = Card::new(Denomination::Numerical(2), Suit::Clubs);
 
         //empty hand
         let actions = hand.actions();
@@ -596,9 +579,9 @@ mod handtests {
         hand.insert(three2);
         assert_eq!(hand.hand_type(), HandType::Normal);
 
-        let (mut hand1s, mut hand2s) = hand.split_hand()?;
-        let hand1s = hand1s.insert(queen);
-        let hand2s = hand2s.insert(ace1);
+        let (hand1s, hand2s) = hand.split_hand()?;
+        let mut hand1s = hand1s.insert(queen);
+        let mut hand2s = hand2s.insert(ace1);
         assert_eq!(hand1s.hand_type(), HandType::Split);
         assert_eq!(hand2s.hand_type(), HandType::SplitSoft);
 
