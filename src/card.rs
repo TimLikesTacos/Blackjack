@@ -33,6 +33,7 @@ pub enum Suit {
     Spades,
     Hearts,
     Diamonds,
+    Pumpkin,
 }
 
 // Similar to `Option`, but the `None` equivalent value carrier a card.  Must be flipped to be unwraped.
@@ -98,6 +99,7 @@ impl Display for Suit {
             Spades => '\u{2660}',
             Hearts => '\u{2661}',
             Diamonds => '\u{2662}',
+            Pumpkin => '\u{f383}',
         };
 
         write!(f, "{}", char)

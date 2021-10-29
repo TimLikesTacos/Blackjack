@@ -33,6 +33,9 @@ impl Player {
     }
 
     pub fn place_bet(&mut self, bet: Rational64) -> Res<()> {
+        if bet <= Rational64::zero() {
+            return Err(Box::new(BlJaError::ImproperAction("Cannot bet zero or negative numbers")));
+        }
         if self.hands.len() > 1
             || self
                 .hands
@@ -57,6 +60,10 @@ impl Player {
 
     /// Sets insurance
     pub fn set_insurance(&mut self, insurance_bet: Rational64) -> Res<()> {
+
+        if insurance_bet < Rational64::zero() {
+            return Err(Box::new(BlJaError::ImproperAction("Cannot bet negative numbers")));
+        }
         let newbalance = self.money - insurance_bet;
         if newbalance < Rational64::zero() {
             return Err(Box::new(BlJaError::NotEnoughMoney));

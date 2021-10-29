@@ -6,8 +6,8 @@ use crate::errors::BlJaError;
 use std::error::Error;
 use std::ops::{Deref, DerefMut};
 
-const NUM_CARD_IN_DECK: usize = 52;
-const SUITS: [Suit; 4] = [Suit::Spades, Suit::Hearts, Suit::Clubs, Suit::Diamonds];
+const NUM_CARD_IN_DECK: usize = 65;
+const SUITS: [Suit; 5] = [Suit::Spades, Suit::Hearts, Suit::Clubs, Suit::Diamonds, Suit::Pumpkin];
 const DEMONS: [Denomination; 13] = [
     Ace,
     King,

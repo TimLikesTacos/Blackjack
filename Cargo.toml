@@ -9,7 +9,7 @@ edition = "2018"
 # rand for random numbers that will be used to shuffle the deck
 rand = "0.8.4"
 # Using fltk for GUI
-fltk = "^1.2"
+fltk = {version = "^1.2", features = ["fltk-bundled"] }
 # num used for rational numbers to represent money
 num = "0.4.0"
 clap = "2.33.3"

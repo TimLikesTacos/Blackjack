@@ -33,6 +33,7 @@ impl Table {
             reshuffle: true,
         };
         table.shuffle();
+        dbg!(&table.deck);
         Ok(table)
     }
 
@@ -56,7 +57,7 @@ impl Table {
 
             let card = self.deck.deal(true);
             let card = match card.denom() {
-                Denomination::Extra(_) => {
+                Denomination::Extra(s) if s == "shuffle" => {
                     self.reshuffle = true;
                     self.deck.deal(true)
                 }
@@ -69,7 +70,7 @@ impl Table {
         // Give the dealer one card faced up.
         let card = self.deck.deal(true);
         let card = match card.denom() {
-            Denomination::Extra(_) => {
+            Denomination::Extra(s) if s == "shuffle" => {
                 self.reshuffle = true;
                 self.deck.deal(true)
             }
@@ -88,7 +89,7 @@ impl Table {
                 .expect("Every player should have one hand");
             let card = self.deck.deal(true);
             let card = match card.denom() {
-                Denomination::Extra(_) => {
+                Denomination::Extra(s) if s == "shuffle" => {
                     self.reshuffle = true;
                     self.deck.deal(true)
                 }
@@ -100,7 +101,7 @@ impl Table {
         // Give dealer one card faced down
         let card = self.deck.deal(false);
         let card = match card.denom() {
-            Denomination::Extra(_) => {
+            Denomination::Extra(s) if s == "shuffle" => {
                 self.reshuffle = true;
                 self.deck.deal(false)
             }
@@ -118,7 +119,7 @@ impl Table {
     pub fn deal_card(&mut self, facedup: bool) -> Visible<Card> {
         let card = self.deck.deal(facedup);
         match card.denom() {
-            Denomination::Extra(_) => {
+            Denomination::Extra(s) if s == "shuffle" => {
                 self.reshuffle = true;
                 self.deck.deal(facedup)
             }
@@ -134,6 +135,13 @@ impl Table {
     pub fn shuffle(&mut self) {
         let mut deck = Deck::new(self.num_of_decks).unwrap();
 
+        // // todo put this back to push
+        // deck.push(Card::new(Denomination::Extra("rules"), Suit::Pumpkin));
+        // for _ in 0..2 {
+        //     deck.push(Card::new(Denomination::Extra("joker"), Suit::Pumpkin));
+        // }
+
+
         deck.shuffle();
         // Place the cut card 60-75 cards from the back. Not done for single deck
         if self.num_of_decks > 1 {
@@ -144,6 +152,7 @@ impl Table {
             deck.insert(len - position, cut_card);
             self.reshuffle = false;
         }
+
 
         self.deck = deck;
     }

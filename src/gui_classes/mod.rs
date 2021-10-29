@@ -246,7 +246,15 @@ impl GUIMain {
                 .set_label(&rc.borrow().display_money());
 
             match self.next_player() {
-                Some(_) => self.offer_insurance(),
+                Some(_) => {
+                    if self.active_players[self.index]
+                        .borrow()
+                        .get_hand(self.hand_num)
+                        .unwrap().hand_type() == HandType::Joker {
+                        self.set_insurance("0".to_string());
+                    }
+                    self.offer_insurance()
+                },
                 None => {
                     self.middle.insurance.hide();
                     self.first_player();
@@ -273,6 +281,11 @@ impl GUIMain {
             match hand.hand_type() {
                 HandType::Natural => {
                     self.message.set_label("Blackjack!");
+                    self.middle.continue_button.show();
+                    return self.inc_turn();
+                }
+                HandType::Joker => {
+                    self.message.set_label("Joker!");
                     self.middle.continue_button.show();
                     return self.inc_turn();
                 }
@@ -484,6 +497,7 @@ impl GUIMain {
 
             let dealer_handtype = dealer_hand.hand_type();
             match dealer_handtype {
+                HandType::Joker => self.settle_with_dealer_joker(),
                 HandType::Natural => self.settle_with_dealer_natrual(),
                 HandType::Bust => self.settle_with_dealer_bust(),
                 _ => self.settle_with_dealer_other(),
@@ -491,6 +505,29 @@ impl GUIMain {
         }
         self.cont_func = Self::clean_after_settle;
     }
+
+    fn settle_with_dealer_joker(&mut self) {
+        let playerrc = Rc::clone(&self.active_players[self.index]);
+        let hand = playerrc.borrow().get_hand(self.hand_num).unwrap().clone();
+        let mut player = playerrc.borrow_mut();
+        self.middle.add_cards(&hand);
+
+        match hand.hand_type() {
+            HandType::Joker => {
+                self.middle.set_label(&format!(
+                    "Tie. Dealer and {} both have a joker hand.",
+                    player.name(),
+                ));
+                player.collect(hand.bet().unwrap());
+            }
+            _ => {
+                let string = format!("Dealer has a joker hand. {} loses.",
+                                     player.name());
+                self.message.set_label(&string);
+            }
+        }
+    }
+
 
     /// used when the dealer has a natural blackjack.  Everyone loses except for anyone with a natural blackjack.  Insurance is paid out.
     fn settle_with_dealer_natrual(&mut self) {
@@ -514,7 +551,12 @@ impl GUIMain {
 
                 self.message.set_label(&string);
                 player.collect(hand.bet().unwrap() + ins_payout);
-            }
+            },
+            HandType::Joker => {
+
+                self.message.set_label(&format!("Dealer has a blackjack, but {} has a joker hand", player.name()));
+                player.collect(Rational64::from_integer(2) * hand.bet().unwrap());
+            },
 
             _ => {
                 let string = match ins_payout > Rational64::zero() {

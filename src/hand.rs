@@ -17,6 +17,7 @@ pub enum HandType {
     Doubled,     // The hand has been doubled down on
     DoubledSoft, // Doubled with ace
     Bust,        // Busted.
+    Joker,       // Contains Joker or Rules card
 }
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
@@ -235,14 +236,22 @@ impl Hand {
         let cardscore = card.score();
 
         // Upgrade to a 'soft' hand if not already
-        if card.denom() == Ace {
-            let newh = match self.htype {
-                Normal => Soft,
-                Split => SplitSoft,
-                Doubled => DoubledSoft,
-                x => x, // No other type needs to change due to an ace.
-            };
-            self.htype = newh;
+        match card.denom()  {
+            Extra ("joker") | Extra ("rules") => {
+                self.htype = Joker;
+            }
+            Ace => {
+                let newh = match self.htype {
+                    Normal => Soft,
+                    Split => SplitSoft,
+                    Doubled => DoubledSoft,
+                    x => x, // No other type needs to change due to an ace.
+                };
+                self.htype = newh;
+            }
+
+            _ => (),
+
         }
 
         // Go from soft to hard if needed
