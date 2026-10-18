@@ -10,11 +10,11 @@ use std::rc::Rc;
 /// A struct where the players, dealer, and deck is located.
 #[derive(Debug)]
 pub struct Table {
-    pub(crate) dealer: Player,
+    pub dealer: Player,
     players: Vec<Rc<RefCell<Player>>>,
     deck: Deck,
     num_of_decks: usize,
-    pub(crate) reshuffle: bool,
+    pub reshuffle: bool,
 }
 
 impl Table {

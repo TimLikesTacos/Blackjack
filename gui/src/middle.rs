@@ -1,7 +1,7 @@
-use crate::card::{Card, Visible};
-use crate::gui_classes::{GUICard, CARD_H, CARD_W};
-use crate::hand::Action::{Double, Hit, Split, Stand};
-use crate::hand::{Action, Hand};
+use blackjack_types::card::{Card, Visible};
+use crate::{GUICard, CARD_H, CARD_W};
+use blackjack_types::hand::Action::{Double, Hit, Split, Stand};
+use blackjack_types::hand::{Action, Hand};
 use crate::Message::{Bet, Insurance};
 use crate::{Message, BORDER, PADDING, WIN_W};
 use fltk::app::Sender;

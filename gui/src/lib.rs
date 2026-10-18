@@ -5,14 +5,14 @@ pub mod middle;
 pub mod player_widget;
 pub use fltk::prelude::*;
 
-pub use crate::gui_classes::card::*;
-pub use crate::gui_classes::dealer::GUIDealer;
-pub use crate::gui_classes::header::GUIHeader;
-use crate::gui_classes::middle::MiddleSection;
-use crate::gui_classes::player_widget::GUIPlayer;
-use crate::hand::{Action, HandType};
-use crate::player::{Player, Status};
-use crate::table::Table;
+pub use crate::card::*;
+pub use crate::dealer::GUIDealer;
+pub use crate::header::GUIHeader;
+use crate::middle::MiddleSection;
+use crate::player_widget::GUIPlayer;
+use blackjack_types::hand::{Action, HandType};
+use blackjack_types::player::{Player, Status};
+use blackjack_types::table::Table;
 use fltk::enums;
 use fltk::enums::{Align, FrameType};
 use fltk::frame::Frame;
@@ -22,6 +22,16 @@ use std::cell::RefCell;
 use std::cmp::min;
 use std::ops::Deref;
 use std::rc::Rc;
+
+#[derive(Debug, Clone)]
+pub enum Message {
+    CurrentPlayer(usize),
+    Bet(String),
+    Insurance(String),
+    Play(Action),
+    Restart,
+    Continue,
+}
 
 pub const BUTTON_H: i32 = 80;
 pub const WIN_W: i32 = 1000;
@@ -38,11 +48,11 @@ pub const EIGHTH: i32 = WIN_H / 8;
 /// from dealing, to betting, to insurance, to hitting or standing, and finally payout is done here.  Most of the
 /// logic for rules occurs in the non-gui structs.
 pub struct GUIMain {
-    pub(crate) header: GUIHeader,
-    pub(crate) dealer: GUIDealer,
-    pub(crate) message: Frame,
-    pub(crate) middle: MiddleSection,
-    pub(crate) players_gui: Vec<GUIPlayer>,
+    pub header: GUIHeader,
+    pub dealer: GUIDealer,
+    pub message: Frame,
+    pub middle: MiddleSection,
+    pub players_gui: Vec<GUIPlayer>,
     pub(crate) table: Table,
     pub(crate) index: usize,
     pub(crate) active_players: Vec<Rc<RefCell<Player>>>,

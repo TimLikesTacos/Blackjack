@@ -1,0 +1,9 @@
+[package]
+name = "blackjack_types"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+rand.workspace = true
+num.workspace = true

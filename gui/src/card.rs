@@ -1,5 +1,5 @@
-use crate::card::{Card, Visible};
-use crate::gui_classes::{CARD_H, CARD_W};
+use blackjack_types::card::{Card, Visible};
+use crate::{CARD_H, CARD_W};
 use fltk::enums::{Align, Color, FrameType};
 use fltk::frame::*;
 use fltk::group::Group;

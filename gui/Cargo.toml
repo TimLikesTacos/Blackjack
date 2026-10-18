@@ -1,0 +1,16 @@
+[package]
+name = "blackjack_gui"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "blackjack"
+path = "src/main.rs"
+
+[dependencies]
+# Using fltk for GUI
+fltk = "^1.2"
+blackjack_types.workspace = true
+num.workspace = true
+clap.workspace = true

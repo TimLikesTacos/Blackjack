@@ -1,4 +1,4 @@
-use crate::gui_classes::{BUTTON_H, PADDING};
+use crate::{BUTTON_H, PADDING};
 use crate::Message;
 use fltk::app::Sender;
 use fltk::button::Button;

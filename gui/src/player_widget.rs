@@ -1,6 +1,6 @@
-use crate::gui_classes::PADDING;
-use crate::hand::Hand;
-use crate::player::Player;
+use crate::PADDING;
+use blackjack_types::hand::Hand;
+use blackjack_types::player::Player;
 use fltk::enums;
 use fltk::enums::{Align, FrameType};
 use fltk::frame::Frame;

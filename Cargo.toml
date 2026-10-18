@@ -1,15 +1,20 @@
-[package]
-name = "blackjack"
+[workspace]
+members = ["types"]
+#ignore for now
+exclude = ["gui"]
+resolver = "2"
+
+[workspace.package]
 version = "0.1.0"
-edition = "2018"
+edition = "2024"
+authors = ["Tim Reed <thetimmyreed@gmail.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
+[workspace.dependencies]
+blackjack_types = { path = "types" }
 # rand for random numbers that will be used to shuffle the deck
 rand = "0.8.4"
-# Using fltk for GUI
-fltk = "^1.2"
 # num used for rational numbers to represent money
 num = "0.4.0"
 clap = "2.33.3"

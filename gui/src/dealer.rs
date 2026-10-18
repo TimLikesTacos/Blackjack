@@ -1,6 +1,6 @@
-use crate::card::{Card, Visible};
-use crate::gui_classes::{GUICard, CARD_H, CARD_W};
-use crate::hand::Hand;
+use blackjack_types::card::{Card, Visible};
+use crate::{GUICard, CARD_H, CARD_W};
+use blackjack_types::hand::Hand;
 use crate::PADDING;
 use fltk::enums::{Align, FrameType};
 use fltk::frame::Frame;

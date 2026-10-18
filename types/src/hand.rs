@@ -1,8 +1,8 @@
+use crate::Res;
 use crate::card::Denomination::*;
 use crate::card::{BlackJackScore, Card, Denomination, Visible};
 use crate::constants::{DOUBLECARDCOUNT, SPLITCARDCOUNT, TWENTYONE};
 use crate::errors::BlJaError;
-use crate::Res;
 use num::Rational64;
 use std::collections::HashSet;
 
@@ -83,13 +83,12 @@ impl Hand {
     }
 
     /// Action to add any flipped over card to the score and adjust the handtype
-    #[allow(mutable_borrow_reservation_conflict)]
     pub fn flip_over(&mut self) -> HandType {
         // Only the last card in the hand should be faced down.
-        if self.cards.len() == 0 {
+        if self.cards.is_empty() {
             return self.htype;
         }
-        if let Some(last) = self.cards.get(self.cards.len() - 1) {
+        if let Some(last) = self.cards.last() {
             match last {
                 Visible::FacedUp(_) => self.htype, // already face up
                 Visible::FacedDown(c) => {
@@ -314,12 +313,12 @@ impl Hand {
 #[cfg(test)]
 mod handtests {
     use super::*;
+    use crate::Res;
     use crate::card::Visible::FacedUp;
     use crate::card::{Denomination, Suit};
     use crate::deck::Deck;
     use crate::hand::Action::{Double, Hit, Stand};
     use crate::hand::HandType::SplitAces;
-    use crate::Res;
     use std::error::Error;
 
     #[test]

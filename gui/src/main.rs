@@ -8,36 +8,15 @@ use fltk::{
 };
 use std::error::Error;
 
-use crate::gui_classes::*;
-use crate::hand::Action;
-use crate::table::Table;
+use blackjack_gui::middle::*;
+use blackjack_gui::player_widget::GUIPlayer;
+use blackjack_gui::*;
+use blackjack_types::table::Table;
 use clap::{App, Arg};
-use gui_classes::middle::*;
-use gui_classes::player_widget::GUIPlayer;
 use std::process::exit;
-
-mod card;
-mod constants;
-mod deck;
-mod deck_traits;
-mod errors;
-mod gui_classes;
-mod hand;
-mod player;
-mod table;
 
 // Type alias for Result<T, Box<dyn Error>>
 type Res<T> = Result<T, Box<dyn Error>>;
-
-#[derive(Debug, Clone)]
-pub enum Message {
-    CurrentPlayer(usize),
-    Bet(String),
-    Insurance(String),
-    Play(Action),
-    Restart,
-    Continue,
-}
 
 fn main() -> Res<()> {
     // CLI options
